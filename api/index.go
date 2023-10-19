@@ -5,17 +5,17 @@ import (
 	"net/http"
 
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
+	"github.com/frasnym/go-furaphonify-telebot/config"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/telebot"
+	"github.com/frasnym/go-furaphonify-telebot/service"
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	telebot.InitTgBotApi()
-	bot := telebot.GetBot()
+	defer fmt.Fprintf(w, "Index OK")
 
-	err := bot.SetWebhook()
+	botService := service.NewBotService(config.GetConfig(), telebot.GetBot())
+	err := botService.SetWebhook()
 	if err != nil {
 		logger.Error(r.Context(), "unable to SetWebhook", err)
 	}
-
-	fmt.Fprintf(w, "Index OK")
 }
