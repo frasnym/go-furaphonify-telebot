@@ -24,3 +24,23 @@ func TestRemoveNonNumeric(t *testing.T) {
 		})
 	}
 }
+
+func TestRemovePrefix(t *testing.T) {
+	testCases := []struct {
+		prefix   string
+		input    string
+		expected string
+	}{
+		{"62", "628123456789", "8123456789"},
+		{"xyz", "abcdef", "abcdef"},
+		{"123", "12345", "45"},
+		{"", "Hello", "Hello"},
+	}
+
+	for _, tc := range testCases {
+		result := RemovePrefix(tc.prefix, tc.input)
+		if result != tc.expected {
+			t.Errorf("RemovePrefix(%s, %s) = %s; want %s", tc.prefix, tc.input, result, tc.expected)
+		}
+	}
+}

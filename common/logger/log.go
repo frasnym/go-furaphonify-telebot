@@ -12,4 +12,5 @@ const (
 	LogLevelError LogLevel = "Error"
 	LogLevelWarn  LogLevel = "Warn"
 	LogLevelInfo  LogLevel = "Info"
+	LogLevelDebug LogLevel = "Debug"
 )

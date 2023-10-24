@@ -27,6 +27,7 @@ func initConfig() {
 		VercelUrl:        os.Getenv("VERCEL_URL"),
 		Port:             os.Getenv("PORT"),
 		TelegramBotToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TrueCallerToken:  os.Getenv("TRUECALLER_TOKEN"),
 	}
 }
 

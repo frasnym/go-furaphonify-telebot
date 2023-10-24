@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/session"
+	"github.com/frasnym/go-furaphonify-telebot/pkg/truecaller"
 	"github.com/frasnym/go-furaphonify-telebot/repository"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -17,40 +19,10 @@ import (
 type WhatsappService interface {
 	Request(ctx context.Context, userID int, chatID int64) error
 	Processor(ctx context.Context, userID int, input string) error
-	NotifyError(ctx context.Context, userID int, msg string) error
 }
 
 type whatsappSvc struct {
 	botRepo repository.BotRepository
-}
-
-// NotifyError implements WhatsappService.
-func (s *whatsappSvc) NotifyError(ctx context.Context, userID int, msg string) error {
-	var err error
-	defer func() {
-		logger.LogService(ctx, "WhatsappNotifyError", err)
-	}()
-
-	chatID, err := session.GetChatID(userID)
-	if err != nil {
-		err = fmt.Errorf("err session.GetChatID: %w", err)
-		return err
-	}
-
-	messageID, err := session.GetMessageID(userID)
-	if err != nil {
-		err = fmt.Errorf("err session.GetMessageID: %w", err)
-		return err
-	}
-
-	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, msg)
-	_, err = s.botRepo.SendMessage(ctx, editMsg)
-	if err != nil {
-		err = fmt.Errorf("err botRepo.SendMessage: %w", err)
-		return err
-	}
-
-	return nil
 }
 
 // Request initiates a request for a user to enter their phone number for WhatsAppification.
@@ -87,9 +59,9 @@ func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) e
 	}()
 
 	if session.IsInteractionTimedOut(userID) {
-		err = s.NotifyError(ctx, userID, "Request Timeout")
+		err = s.notifyError(ctx, userID, "Request Timeout")
 		if err != nil {
-			err = fmt.Errorf("err NotifyError: %w", err)
+			err = fmt.Errorf("err notifyError: %w", err)
 		}
 
 		session.DeleteUserSession(userID)
@@ -113,16 +85,16 @@ func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) e
 	phoneNumber := common.RemoveNonNumeric(input)
 	if len(phoneNumber) <= 0 {
 		if err = session.ResetTimer(userID); err != nil {
-			err = s.NotifyError(ctx, userID, "No Session")
+			err = s.notifyError(ctx, userID, "No Session")
 			if err != nil {
-				err = fmt.Errorf("err NotifyError: %w", err)
+				err = fmt.Errorf("err notifyError: %w", err)
 			}
 			return nil
 		}
 		replyText = fmt.Sprint(replyText, "Unable to parse your number, please try again.")
-		err = s.NotifyError(ctx, userID, replyText)
+		err = s.notifyError(ctx, userID, replyText)
 		if err != nil {
-			err = fmt.Errorf("err NotifyError: %w", err)
+			err = fmt.Errorf("err notifyError: %w", err)
 		}
 
 		return err
@@ -155,6 +127,9 @@ func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) e
 	inlineKeyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(inlineKeyboard)
 	replyMarkup = &inlineKeyboardMarkup
 
+	// Phone Information
+	go s.getPhoneInformation(ctx, chatID, messageID, phoneNumber, replyText)
+
 	err = nil
 	return nil
 }
@@ -162,4 +137,58 @@ func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) e
 // NewWhatsappService creates a new WhatsappService using the provided bot repository.
 func NewWhatsappService(botRepo *repository.BotRepository) WhatsappService {
 	return &whatsappSvc{botRepo: *botRepo}
+}
+
+func (s *whatsappSvc) notifyError(ctx context.Context, userID int, msg string) error {
+	var err error
+	defer func() {
+		logger.LogService(ctx, "WhatsappNotifyError", err)
+	}()
+
+	chatID, err := session.GetChatID(userID)
+	if err != nil {
+		err = fmt.Errorf("err session.GetChatID: %w", err)
+		return err
+	}
+
+	messageID, err := session.GetMessageID(userID)
+	if err != nil {
+		err = fmt.Errorf("err session.GetMessageID: %w", err)
+		return err
+	}
+
+	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, msg)
+	_, err = s.botRepo.SendMessage(ctx, editMsg)
+	if err != nil {
+		err = fmt.Errorf("err botRepo.SendMessage: %w", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *whatsappSvc) getPhoneInformation(ctx context.Context, chatID int64, messageID int, phoneNumber, currentText string) error {
+	var err error
+	defer func() {
+		logger.LogService(ctx, "WhatsappGetPhoneInformation", err)
+	}()
+
+	tcResp, err := truecaller.GetPhoneNumberInformation(ctx, phoneNumber)
+	if err != nil {
+		err = fmt.Errorf("err truecaller.GetPhoneNumberInformation: %w", err)
+		return err
+	}
+
+	tcRespByte, _ := json.Marshal(tcResp)
+	logger.Debug(ctx, string(tcRespByte))
+
+	messageTxt := fmt.Sprint(currentText, "\n", tcResp.ParseInformationMessage())
+	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, messageTxt)
+
+	_, err = s.botRepo.SendMessage(ctx, editMsg)
+	if err != nil {
+		err = fmt.Errorf("err botRepo.SendMessage: %w", err)
+	}
+
+	return nil
 }

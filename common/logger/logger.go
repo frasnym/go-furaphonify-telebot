@@ -21,6 +21,10 @@ func Info(ctx context.Context, msg string) {
 	printToConsole(ctx, LogLevelInfo, msg)
 }
 
+func Debug(ctx context.Context, msg string) {
+	printToConsole(ctx, LogLevelDebug, msg)
+}
+
 func printToConsole(ctx context.Context, level LogLevel, msg string) {
 	log := ConsoleLog{
 		Level:         level,
