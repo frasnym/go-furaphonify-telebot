@@ -7,15 +7,29 @@ import (
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/config"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/telebot"
-	"github.com/frasnym/go-furaphonify-telebot/service"
+	"github.com/frasnym/go-furaphonify-telebot/repository"
 )
 
+// IndexHandler handles incoming HTTP requests and sets up a webhook for a Telegram bot.
+// It takes an HTTP response writer (w) and a request (r), and ensures that the bot's webhook is properly configured.
+// If any errors occur during the process, they are logged.
+// After the webhook is set up successfully, it writes an "Index OK" message to the response writer (w).
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	defer fmt.Fprintf(w, "Index OK")
+	var err error
+	ctx := r.Context()
 
-	botService := service.NewBotService(config.GetConfig(), telebot.GetBot())
-	err := botService.SetWebhook()
+	// Log any errors and write "Index OK" as the API response
+	defer func() {
+		logger.LogService(ctx, "WebhookHandler", err)
+		fmt.Fprintf(w, "Index OK")
+	}()
+
+	// Create a new bot repository with the application's configuration and Telegram bot
+	botRepo := repository.NewBotRepository(config.GetConfig(), telebot.GetBot())
+
+	// Set up the webhook for the bot
+	err = botRepo.SetWebhook(ctx)
 	if err != nil {
-		logger.Error(r.Context(), "unable to SetWebhook", err)
+		err = fmt.Errorf("err botRepo.SetWebhook: %w", err)
 	}
 }
