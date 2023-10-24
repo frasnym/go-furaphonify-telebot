@@ -61,7 +61,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		// Get the user's current action
 		action, errSession := session.GetAction(userID)
 		if errSession != nil {
-			err = fmt.Errorf("err session.GetAction: %w", errSession)
+			logger.Warn(ctx, fmt.Sprintf("session.GetAction: %s", errSession.Error()))
 			return
 		}
 

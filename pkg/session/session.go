@@ -29,7 +29,7 @@ func NewSession(userID int, chatID int64, action string) {
 
 // SetMessageID sets the message ID for a user's session, renewing the session timer.
 func SetMessageID(userID, MessageID int) error {
-	if isInteractionTimedOut(userID) {
+	if IsInteractionTimedOut(userID) {
 		return common.ErrTimeout
 	}
 
@@ -44,11 +44,10 @@ func SetMessageID(userID, MessageID int) error {
 
 // ResetTimer resets the session timer for a user's session.
 func ResetTimer(userID int) error {
-	if isInteractionTimedOut(userID) {
-		return common.ErrTimeout
+	session, exist := getUserSession(userID)
+	if !exist {
+		return common.ErrNoSession
 	}
-
-	session, _ := getUserSession(userID)
 	session.StartTime = time.Now() // Renew the timer
 	setUserSession(userID, session)
 
@@ -114,8 +113,8 @@ func getUserSession(userID int) (*model.Session, bool) {
 	return &session, exists
 }
 
-// isInteractionTimedOut checks if a user's session has timed out due to inactivity.
-func isInteractionTimedOut(userID int) bool {
+// IsInteractionTimedOut checks if a user's session has timed out due to inactivity.
+func IsInteractionTimedOut(userID int) bool {
 	session, exist := getUserSession(userID)
 	if !exist {
 		return true

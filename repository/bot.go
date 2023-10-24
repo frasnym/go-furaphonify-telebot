@@ -19,6 +19,7 @@ type BotRepository interface {
 	GetUpdate(ctx context.Context, r io.Reader) (*tgbotapi.Update, error)
 	SendMessage(ctx context.Context, c tgbotapi.Chattable) (*tgbotapi.Message, error)
 	SendTextMessage(ctx context.Context, chatID int64, text string) (*tgbotapi.Message, error)
+	DeleteMessage(ctx context.Context, chatID int64, messageID int) (*tgbotapi.Message, error)
 }
 
 type botRepo struct {
@@ -35,7 +36,7 @@ func (s *botRepo) SendMessage(ctx context.Context, c tgbotapi.Chattable) (*tgbot
 
 	msg, err := s.bot.Send(c)
 	if err != nil {
-		err = fmt.Errorf("error sending message: %w", err)
+		err = fmt.Errorf("err bot.Send: %w", err)
 		return nil, err
 	}
 
@@ -51,7 +52,7 @@ func (*botRepo) GetUpdate(ctx context.Context, r io.Reader) (*tgbotapi.Update, e
 
 	update := tgbotapi.Update{}
 	if err := json.NewDecoder(r).Decode(&update); err != nil {
-		err = fmt.Errorf("error decoding update: %w", err)
+		err = fmt.Errorf("err json.NewDecoder(r).Decode: %w", err)
 		return nil, err
 	}
 
@@ -68,7 +69,7 @@ func (s *botRepo) SendTextMessage(ctx context.Context, chatID int64, text string
 	stringMsg := tgbotapi.NewMessage(chatID, text)
 	msg, err := s.bot.Send(stringMsg)
 	if err != nil {
-		err = fmt.Errorf("error sending text message: %w", err)
+		err = fmt.Errorf("err bot.Send: %w", err)
 		return nil, err
 	}
 
@@ -86,7 +87,7 @@ func (s *botRepo) SetWebhook(ctx context.Context) error {
 
 	info, err := s.bot.GetWebhookInfo()
 	if err != nil {
-		err = fmt.Errorf("error getting webhook info: %w", err)
+		err = fmt.Errorf("err bot.GetWebhookInfo: %w", err)
 		return err
 	}
 	if info.URL == webhookURL {
@@ -95,11 +96,27 @@ func (s *botRepo) SetWebhook(ctx context.Context) error {
 
 	_, err = s.bot.SetWebhook(tgbotapi.NewWebhook(webhookURL))
 	if err != nil {
-		err = fmt.Errorf("error setting up webhook: %w", err)
+		err = fmt.Errorf("err bot.SetWebhook: %w", err)
 		return err
 	}
 
 	return nil
+}
+
+func (r *botRepo) DeleteMessage(ctx context.Context, chatID int64, messageID int) (*tgbotapi.Message, error) {
+	var err error
+	defer func() {
+		logger.LogService(ctx, "BotDeleteMessage", err)
+	}()
+
+	del := tgbotapi.NewDeleteMessage(chatID, messageID)
+	msg, err := r.SendMessage(ctx, del)
+	if err != nil {
+		err = fmt.Errorf("err SendMessage: %w", err)
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 // NewBotRepository creates a new BotRepository using the provided configuration and Telegram bot.
