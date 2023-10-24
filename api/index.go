@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/config"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/telebot"
@@ -16,7 +17,7 @@ import (
 // After the webhook is set up successfully, it writes an "Index OK" message to the response writer (w).
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
-	ctx := r.Context()
+	ctx := ctxdata.EnsureCorrelationIDExist(r)
 
 	// Log any errors and write "Index OK" as the API response
 	defer func() {

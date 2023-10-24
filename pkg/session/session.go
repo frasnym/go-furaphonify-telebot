@@ -99,7 +99,7 @@ func setUserSession(userID int, newSession *model.Session) {
 	defer func() {
 		userSessionMutex.Unlock()
 		if r := recover(); r != nil {
-			logger.Error(context.TODO(), "unable to set user Session", fmt.Errorf("%v", r))
+			logger.Error(context.TODO(), fmt.Errorf("err setUserSession: %v", r))
 		}
 	}()
 	userSessions[userID] = *newSession

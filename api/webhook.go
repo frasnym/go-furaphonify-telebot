@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
+	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/config"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/session"
@@ -19,7 +20,7 @@ import (
 // After processing the request, it writes a "Webhook OK" message to the response writer (w).
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
-	ctx := r.Context()
+	ctx := ctxdata.EnsureCorrelationIDExist(r)
 
 	// Log any errors and write "Webhook OK" as the API response
 	defer func() {
