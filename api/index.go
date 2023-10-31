@@ -19,11 +19,18 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	ctx := ctxdata.EnsureCorrelationIDExist(r)
 
+	respText := "Index"
+
 	// Log any errors and write "Index OK" as the API response
 	defer func() {
-		logger.LogService(ctx, "WebhookHandler", err)
-		fmt.Fprintf(w, "Index OK")
+		logger.LogService(ctx, "IndexHandler", err)
+		fmt.Fprintf(w, "%s OK", respText)
 	}()
+
+	if r.URL.Path == "/favicon.ico" {
+		respText = "Favicon"
+		return
+	}
 
 	// Create a new bot repository with the application's configuration and Telegram bot
 	botRepo := repository.NewBotRepository(config.GetConfig(), telebot.GetBot())

@@ -25,7 +25,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	// Log any errors and write "Webhook OK" as the API response
 	defer func() {
 		logger.LogService(ctx, "WebhookHandler", err)
-		fmt.Fprintf(w, "Webhook OK")
+		fmt.Fprint(w, "Webhook OK")
 	}()
 
 	// Create a new bot repository with the application's configuration and Telegram bot
