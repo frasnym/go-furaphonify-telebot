@@ -2,11 +2,12 @@ package truecaller
 
 import "fmt"
 
-type Response struct {
+type SearchResponse struct {
 	Name string `json:"name"`
+	Raw  string
 }
 
-func (e *Response) ParseInformationMessage() string {
+func (e *SearchResponse) ParseInformationMessage() string {
 	header := "Information:"
 	name := fmt.Sprintf("\nName: %s", e.Name)
 

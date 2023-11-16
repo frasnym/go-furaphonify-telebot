@@ -8,6 +8,7 @@ import (
 	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/config"
+	"github.com/frasnym/go-furaphonify-telebot/pkg/gsheet"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/session"
 	"github.com/frasnym/go-furaphonify-telebot/pkg/telebot"
 	"github.com/frasnym/go-furaphonify-telebot/repository"
@@ -29,8 +30,10 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Create a new bot repository with the application's configuration and Telegram bot
-	botRepo := repository.NewBotRepository(config.GetConfig(), telebot.GetBot())
-	whatsappSvc := service.NewWhatsappService(&botRepo)
+	cfg := config.GetConfig()
+	botRepo := repository.NewBotRepository(cfg, telebot.GetBot())
+	gsheetRepo := repository.NewGSheetRepository(cfg, gsheet.GetService())
+	whatsappSvc := service.NewWhatsappService(&botRepo, &gsheetRepo)
 
 	// Get the update from the request body
 	update, err := botRepo.GetUpdate(ctx, r.Body)

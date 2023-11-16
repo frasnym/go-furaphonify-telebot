@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -22,7 +21,8 @@ type WhatsappService interface {
 }
 
 type whatsappSvc struct {
-	botRepo repository.BotRepository
+	botRepo    repository.BotRepository
+	gsheetRepo repository.GSheetRepository
 }
 
 // Request initiates a request for a user to enter their phone number for WhatsAppification.
@@ -128,15 +128,29 @@ func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) e
 	replyMarkup = &inlineKeyboardMarkup
 
 	// Phone Information
-	go s.getPhoneInformation(ctx, chatID, messageID, phoneNumber, replyText)
+	// TODO: Get from sheet db first
+	tcResp, err := s.getPhoneInformation(ctx, phoneNumber)
+	if err != nil {
+		err = fmt.Errorf("err notifyError: %w", err)
+		return err
+	}
+
+	// Update message
+	replyText = fmt.Sprint(replyText, "\n", tcResp.ParseInformationMessage())
+
+	// Save to db
+	if err = s.gsheetRepo.AppendRow(ctx, phoneNumber, tcResp.Name, tcResp.Raw); err != nil {
+		err = fmt.Errorf("err gsheetRepo.AppendRow: %w", err)
+		return err
+	}
 
 	err = nil
 	return nil
 }
 
 // NewWhatsappService creates a new WhatsappService using the provided bot repository.
-func NewWhatsappService(botRepo *repository.BotRepository) WhatsappService {
-	return &whatsappSvc{botRepo: *botRepo}
+func NewWhatsappService(botRepo *repository.BotRepository, gsheetRepo *repository.GSheetRepository) WhatsappService {
+	return &whatsappSvc{botRepo: *botRepo, gsheetRepo: *gsheetRepo}
 }
 
 func (s *whatsappSvc) notifyError(ctx context.Context, userID int, msg string) error {
@@ -167,7 +181,7 @@ func (s *whatsappSvc) notifyError(ctx context.Context, userID int, msg string) e
 	return nil
 }
 
-func (s *whatsappSvc) getPhoneInformation(ctx context.Context, chatID int64, messageID int, phoneNumber, currentText string) error {
+func (s *whatsappSvc) getPhoneInformation(ctx context.Context, phoneNumber string) (*truecaller.SearchResponse, error) {
 	var err error
 	defer func() {
 		logger.LogService(ctx, "WhatsappGetPhoneInformation", err)
@@ -176,19 +190,8 @@ func (s *whatsappSvc) getPhoneInformation(ctx context.Context, chatID int64, mes
 	tcResp, err := truecaller.GetPhoneNumberInformation(ctx, phoneNumber)
 	if err != nil {
 		err = fmt.Errorf("err truecaller.GetPhoneNumberInformation: %w", err)
-		return err
+		return nil, err
 	}
 
-	tcRespByte, _ := json.Marshal(tcResp)
-	logger.Debug(ctx, string(tcRespByte))
-
-	messageTxt := fmt.Sprint(currentText, "\n", tcResp.ParseInformationMessage())
-	editMsg := tgbotapi.NewEditMessageText(chatID, messageID, messageTxt)
-
-	_, err = s.botRepo.SendMessage(ctx, editMsg)
-	if err != nil {
-		err = fmt.Errorf("err botRepo.SendMessage: %w", err)
-	}
-
-	return nil
+	return tcResp, nil
 }

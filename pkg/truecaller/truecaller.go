@@ -12,7 +12,7 @@ import (
 	"github.com/frasnym/go-furaphonify-telebot/config"
 )
 
-func GetPhoneNumberInformation(ctx context.Context, phoneNumber string) (*Response, error) {
+func GetPhoneNumberInformation(ctx context.Context, phoneNumber string) (*SearchResponse, error) {
 	var err error
 	defer func() {
 		logger.LogService(ctx, "GetPhoneNumberInformation", err)
@@ -55,18 +55,20 @@ func GetPhoneNumberInformation(ctx context.Context, phoneNumber string) (*Respon
 		err = fmt.Errorf("err io.ReadAll: %w", err)
 		return nil, err
 	}
-	logger.Debug(ctx, string(responseBody))
+	rawResponse := string(responseBody)
+	logger.Debug(ctx, rawResponse)
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("err resp.StatusCode: %d", resp.StatusCode)
 		return nil, err
 	}
 
-	var result Response
+	var result SearchResponse
 	if err = json.Unmarshal(responseBody, &result); err != nil {
 		err = fmt.Errorf("err json.Unmarshal: %w", err)
 		return nil, err
 	}
+	result.Raw = string(responseBody)
 
 	return &result, nil
 }

@@ -24,10 +24,16 @@ func initConfig() {
 
 	// TODO: Auto parse to struct
 	cfg = &Config{
-		VercelUrl:        os.Getenv("VERCEL_URL"),
-		Port:             os.Getenv("PORT"),
-		TelegramBotToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
-		TrueCallerToken:  os.Getenv("TRUECALLER_TOKEN"),
+		VercelUrl:              os.Getenv("VERCEL_URL"),
+		Port:                   os.Getenv("PORT"),
+		TelegramBotToken:       os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TrueCallerToken:        os.Getenv("TRUECALLER_TOKEN"),
+		GsheetID:               os.Getenv("GSHEET_ID"),
+		GsheetProjectID:        os.Getenv("GSHEET_PROJECT_ID"),
+		GsheetUserPrivateKeyID: os.Getenv("GSHEET_USER_PRIVATE_KEY_ID"),
+		GsheetUserPrivateKey:   os.Getenv("GSHEET_USER_PRIVATE_KEY"),
+		GsheetUserClientEmail:  os.Getenv("GSHEET_USER_CLIENT_EMAIL"),
+		GsheetUserClientID:     os.Getenv("GSHEET_USER_CLIENT_ID"),
 	}
 }
 
