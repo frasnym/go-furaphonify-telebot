@@ -21,14 +21,19 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	ctx := ctxdata.EnsureCorrelationIDExist(r)
 	respText := "IndexHandler"
+	isFavicon := r.URL.Path == "/favicon.ico"
 
 	// Log any errors and write "Index OK" as the API response
 	defer func() {
 		logger.LogHandler(ctx, respText, err, &now)
-		fmt.Fprintf(w, "%s OK", respText)
+		if isFavicon {
+			http.ServeFile(w, r, "public/favicon.ico")
+		} else {
+			fmt.Fprintf(w, "%s OK", respText)
+		}
 	}()
 
-	if r.URL.Path == "/favicon.ico" {
+	if isFavicon {
 		respText = "Favicon"
 		return
 	}
