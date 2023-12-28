@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/frasnym/go-furaphonify-telebot/common/logger"
 	"github.com/frasnym/go-furaphonify-telebot/config"
 	"github.com/google/uuid"
 	"google.golang.org/api/sheets/v4"
@@ -20,6 +22,12 @@ type gsheetRepo struct {
 
 // AppendRow implements GSheetRepository.
 func (repo *gsheetRepo) AppendRow(ctx context.Context, phone, name, metadata string) error {
+	var err error
+	now := time.Now()
+	defer func() {
+		logger.LogRepository(ctx, "GSheetDeleteMessage", err, &now)
+	}()
+
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
 			uuid.NewString(),
@@ -29,7 +37,7 @@ func (repo *gsheetRepo) AppendRow(ctx context.Context, phone, name, metadata str
 		}},
 	}
 
-	_, err := repo.service.Spreadsheets.Values.
+	_, err = repo.service.Spreadsheets.Values.
 		Append(repo.cfg.GsheetID, "db!A:C", values).ValueInputOption("RAW").Do()
 
 	if err != nil {

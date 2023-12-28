@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
 	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
@@ -21,12 +22,13 @@ import (
 // After processing the request, it writes a "Webhook OK" message to the response writer (w).
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	now := time.Now()
 	ctx := ctxdata.EnsureCorrelationIDExist(r)
 
 	// Log any errors and write "Webhook OK" as the API response
 	defer func() {
-		logger.LogService(ctx, "WebhookHandler", err)
-		fmt.Fprint(w, "Webhook OK")
+		logger.LogHandler(ctx, "WebhookHandler", err, &now)
+		fmt.Fprint(w, "WebhookHandler OK")
 	}()
 
 	// Create a new bot repository with the application's configuration and Telegram bot

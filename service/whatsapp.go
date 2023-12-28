@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
@@ -28,8 +29,9 @@ type whatsappSvc struct {
 // Request initiates a request for a user to enter their phone number for WhatsAppification.
 func (s *whatsappSvc) Request(ctx context.Context, userID int, chatID int64) error {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "WhatsappRequest", err)
+		logger.LogService(ctx, "WhatsappRequest", err, &now)
 	}()
 
 	// Start a new session for the user
@@ -54,8 +56,9 @@ func (s *whatsappSvc) Request(ctx context.Context, userID int, chatID int64) err
 // Processor processes the user's input (phone number) for WhatsAppification.
 func (s *whatsappSvc) Processor(ctx context.Context, userID int, input string) error {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "WhatsappProcessor", err)
+		logger.LogService(ctx, "WhatsappProcessor", err, &now)
 	}()
 
 	if session.IsInteractionTimedOut(userID) {
@@ -155,8 +158,9 @@ func NewWhatsappService(botRepo *repository.BotRepository, gsheetRepo *repositor
 
 func (s *whatsappSvc) notifyError(ctx context.Context, userID int, msg string) error {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "WhatsappNotifyError", err)
+		logger.LogService(ctx, "WhatsappNotifyError", err, &now)
 	}()
 
 	chatID, err := session.GetChatID(userID)
@@ -183,8 +187,9 @@ func (s *whatsappSvc) notifyError(ctx context.Context, userID int, msg string) e
 
 func (s *whatsappSvc) getPhoneInformation(ctx context.Context, phoneNumber string) (*truecaller.SearchResponse, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "WhatsappGetPhoneInformation", err)
+		logger.LogService(ctx, "WhatsappGetPhoneInformation", err, &now)
 	}()
 
 	tcResp, err := truecaller.GetPhoneNumberInformation(ctx, phoneNumber)

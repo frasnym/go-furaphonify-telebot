@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
@@ -14,8 +15,9 @@ import (
 
 func GetPhoneNumberInformation(ctx context.Context, phoneNumber string) (*SearchResponse, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "GetPhoneNumberInformation", err)
+		logger.LogPkg(ctx, "TrueCallerGetPhoneNumberInformation", err, &now)
 	}()
 
 	url := fmt.Sprintf("https://asia-south1-truecaller-web.cloudfunctions.net/api/noneu/search/v1?q=%s&countryCode=id&type=41", common.RemovePrefix("62", phoneNumber))

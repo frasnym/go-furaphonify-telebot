@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
 )
@@ -35,11 +36,34 @@ func printToConsole(ctx context.Context, level LogLevel, msg string) {
 	fmt.Println(string(logByte))
 }
 
-func LogService(ctx context.Context, serviceName string, err error) {
+func LogService(ctx context.Context, name string, err error, startTime *time.Time) {
 	if err != nil {
-		Error(ctx, fmt.Errorf("%s: %w", serviceName, err))
-		return
+		Error(ctx, fmt.Errorf("[SERVICE] %s error: %v. %v elapsed", name, err, time.Since(*startTime)))
+	} else {
+		Info(ctx, fmt.Sprintf("[SERVICE] %s success. %v elapsed", name, time.Since(*startTime)))
 	}
+}
 
-	Info(ctx, fmt.Sprintf("%s success", serviceName))
+func LogHandler(ctx context.Context, name string, err error, startTime *time.Time) {
+	if err != nil {
+		Error(ctx, fmt.Errorf("[HANDLER] %s error: %v. %v elapsed", name, err, time.Since(*startTime)))
+	} else {
+		Info(ctx, fmt.Sprintf("[HANDLER] %s success. %v elapsed", name, time.Since(*startTime)))
+	}
+}
+
+func LogRepository(ctx context.Context, name string, err error, startTime *time.Time) {
+	if err != nil {
+		Error(ctx, fmt.Errorf("[REPOSITORY] %s error: %v. %v elapsed", name, err, time.Since(*startTime)))
+	} else {
+		Info(ctx, fmt.Sprintf("[REPOSITORY] %s success. %v elapsed", name, time.Since(*startTime)))
+	}
+}
+
+func LogPkg(ctx context.Context, name string, err error, startTime *time.Time) {
+	if err != nil {
+		Error(ctx, fmt.Errorf("[PKG] %s error: %v. %v elapsed", name, err, time.Since(*startTime)))
+	} else {
+		Info(ctx, fmt.Sprintf("[PKG] %s success. %v elapsed", name, time.Since(*startTime)))
+	}
 }

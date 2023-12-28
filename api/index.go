@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common/ctxdata"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
@@ -17,13 +18,13 @@ import (
 // After the webhook is set up successfully, it writes an "Index OK" message to the response writer (w).
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	now := time.Now()
 	ctx := ctxdata.EnsureCorrelationIDExist(r)
-
-	respText := "Index"
+	respText := "IndexHandler"
 
 	// Log any errors and write "Index OK" as the API response
 	defer func() {
-		logger.LogService(ctx, "IndexHandler", err)
+		logger.LogHandler(ctx, respText, err, &now)
 		fmt.Fprintf(w, "%s OK", respText)
 	}()
 

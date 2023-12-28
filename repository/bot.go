@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/frasnym/go-furaphonify-telebot/common"
 	"github.com/frasnym/go-furaphonify-telebot/common/logger"
@@ -30,8 +31,9 @@ type botRepo struct {
 // SendMessage sends a message using the Telegram bot.
 func (s *botRepo) SendMessage(ctx context.Context, c tgbotapi.Chattable) (*tgbotapi.Message, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "BotSendMessage", err)
+		logger.LogRepository(ctx, "BotSendMessage", err, &now)
 	}()
 
 	msg, err := s.bot.Send(c)
@@ -46,8 +48,9 @@ func (s *botRepo) SendMessage(ctx context.Context, c tgbotapi.Chattable) (*tgbot
 // GetUpdate decodes an update from the provided reader.
 func (*botRepo) GetUpdate(ctx context.Context, r io.Reader) (*tgbotapi.Update, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "BotGetUpdate", err)
+		logger.LogRepository(ctx, "BotGetUpdate", err, &now)
 	}()
 
 	update := tgbotapi.Update{}
@@ -62,8 +65,9 @@ func (*botRepo) GetUpdate(ctx context.Context, r io.Reader) (*tgbotapi.Update, e
 // SendTextMessage sends a text message to a specific chat.
 func (s *botRepo) SendTextMessage(ctx context.Context, chatID int64, text string) (*tgbotapi.Message, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "BotSendTextMessage", err)
+		logger.LogRepository(ctx, "BotSendTextMessage", err, &now)
 	}()
 
 	stringMsg := tgbotapi.NewMessage(chatID, text)
@@ -79,8 +83,9 @@ func (s *botRepo) SendTextMessage(ctx context.Context, chatID int64, text string
 // SetWebhook sets up the bot's webhook for receiving updates.
 func (s *botRepo) SetWebhook(ctx context.Context) error {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "BotSetWebhook", err)
+		logger.LogRepository(ctx, "BotSetWebhook", err, &now)
 	}()
 
 	webhookURL := fmt.Sprintf("https://%s/webhook", s.cfg.VercelUrl)
@@ -105,8 +110,9 @@ func (s *botRepo) SetWebhook(ctx context.Context) error {
 
 func (r *botRepo) DeleteMessage(ctx context.Context, chatID int64, messageID int) (*tgbotapi.Message, error) {
 	var err error
+	now := time.Now()
 	defer func() {
-		logger.LogService(ctx, "BotDeleteMessage", err)
+		logger.LogRepository(ctx, "BotDeleteMessage", err, &now)
 	}()
 
 	del := tgbotapi.NewDeleteMessage(chatID, messageID)
